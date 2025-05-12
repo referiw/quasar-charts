@@ -29,8 +29,7 @@
               <q-card-section>
                 <h6 class="text-weight-bold q-mb-md">心率数据统计</h6>
                 <div class="row q-col-gutter-md">
-                  <div>
-                    <q-separator spaced />
+                  <div class="col">
                     <p class="text-subtitle2 q-my-xs">心率 (bpm)</p>
                     <p>
                       最大值: <strong>{{ stats.HR.max }}</strong>
@@ -42,11 +41,21 @@
                       平均值: <strong>{{ stats.HR.avg }}</strong>
                     </p>
                   </div>
+                  <div class="col">
+                    <div class="row justify-evenly">
+                      <p>心率过低提醒</p>
+                      <p>{{ stats.hrLowConter }}次</p>
+                    </div>
+                    <div class="row justify-evenly">
+                      <p>心率过高提醒</p>
+                      <p>{{ stats.hrHighConter }}次</p>
+                    </div>
+                  </div>
                 </div>
 
                 <q-separator class="q-my-md" />
 
-                <h6 class="text-weight-bold q-mb-md">心率 历史数据</h6>
+                <h6 class="text-weight-bold q-mb-md">心率历史数据</h6>
                 <q-table
                   :columns="heartRateColumns"
                   :rows="paginatedHRData"
@@ -85,7 +94,7 @@
 
                 <q-separator class="q-my-md" />
 
-                <h6 class="text-weight-bold q-mb-md">血氧 历史数据</h6>
+                <h6 class="text-weight-bold q-mb-md">血氧历史数据</h6>
                 <q-table
                   :columns="spo2Columns"
                   :rows="paginatedSpO2Data"
@@ -119,7 +128,7 @@ let barChartInstance = null;
 // 生成模拟数据，增加时间戳
 function generateData() {
   return {
-    HR: Math.floor(60 + Math.random() * 40), // 60~100 bpm
+    HR: Math.floor(40 + Math.random() * 80), // 60~100 bpm
     SpO2: Math.floor(92 + Math.random() * 8), // 92%~100%
     time: new Date(),
   };
@@ -127,7 +136,7 @@ function generateData() {
 
 // 异常阈值判断函数
 function isAbnormal(point) {
-  return point.HR < 50 || point.HR > 120 || point.SpO2 < 90;
+  return point.HR < 60 || point.HR > 100;
 }
 
 // 计算统计数据
@@ -135,7 +144,10 @@ const stats = reactive({
   HR: { max: 0, min: 999, avg: 0 },
   SpO2: { max: 0, min: 999, avg: 0 },
 });
+
 function calcStats() {
+  const hrHighConter = ref(0);
+  const hrLowConter = ref(0);
   if (data.length === 0) {
     stats.HR = { max: 0, min: 0, avg: 0 };
     stats.SpO2 = { max: 0, min: 0, avg: 0 };
@@ -154,7 +166,12 @@ function calcStats() {
     if (d.HR < minHR) minHR = d.HR;
     if (d.SpO2 > maxSpO2) maxSpO2 = d.SpO2;
     if (d.SpO2 < minSpO2) minSpO2 = d.SpO2;
+    if (d.HR > 100) hrHighConter.value++;
+    if (d.HR < 60) hrLowConter.value++;
   });
+  stats.hrHighConter = hrHighConter.value;
+  stats.hrLowConter = hrLowConter.value;
+
   stats.HR.max = maxHR;
   stats.HR.min = minHR;
   stats.HR.avg = (sumHR / data.length).toFixed(1);
@@ -370,12 +387,12 @@ onMounted(() => {
   lineChartInstance = echarts.init(lineChart.value);
   barChartInstance = echarts.init(barChart.value);
   // 先推入10条初始数据
-  for (let i = 0; i < 10; i++) {
-    data.push(generateData());
-  }
-  calcStats();
-  updateLineChart();
-  updateBarChart();
+  // for (let i = 0; i < 10; i++) {
+  //   data.push(generateData());
+  // }
+  // calcStats();
+  // updateLineChart();
+  // updateBarChart();
   // 模拟实时数据每秒监听
   const timer = setInterval(() => {
     data.push(generateData());
