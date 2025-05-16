@@ -115,9 +115,76 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, reactive, computed } from "vue";
 import * as echarts from "echarts";
+import mqtt from "mqtt";
+// mqtt相关
+let client = null;
+const mqttHost = "wss://ec1ffed0.ala.cn-hangzhou.emqxsl.cn:8084/mqtt";
+// 如 EMQX公网broker可以是：wss://broker.emqx.io:8084/mqtt
+const mqttTopic = "sensor/hrsp";
+const clientId = "emqx_vue3_" + Math.random().toString(16).substring(2, 8);
 
 // 模拟历史数据，数据结构保持 { HR: number, SpO2: number, time: Date }
 const data = reactive([]);
+
+function connectMqtt() {
+  // 连接参数
+  const options = {
+    clientId: clientId,
+    username: "XT",
+    password: "lyf20040917",
+  };
+
+  client = mqtt.connect(mqttHost, options);
+
+  client.on("connect", () => {
+    console.log("MQTT连接成功");
+    client.subscribe(mqttTopic, { qos: 0 }, (err) => {
+      if (err) {
+        console.error("订阅topic失败", err);
+      } else {
+        console.log(`已订阅主题: ${mqttTopic}`);
+      }
+    });
+  });
+
+  client.on("error", (err) => {
+    console.error("MQTT连接错误:", err);
+  });
+
+  client.on("offline", () => {
+    console.warn("MQTT客户端离线");
+  });
+
+  client.on("reconnect", () => {
+    console.log("MQTT客户端重连中...");
+  });
+
+  client.on("message", (topic, message) => {
+    if (topic === mqttTopic) {
+      console.log(JSON.parse(message.toString()));
+
+      try {
+        const payload = JSON.parse(message.toString());
+
+        let time = payload.time ? new Date(payload.time) : new Date();
+
+        if (data.length >= 100) data.shift();
+
+        data.push({
+          HR: payload.HR,
+          SpO2: payload.SP02,
+          time,
+        });
+
+        calcStats();
+        updateLineChart();
+        updateBarChart();
+      } catch (e) {
+        console.error("消息解析失败:", e);
+      }
+    }
+  });
+}
 
 // refs for charts
 const lineChart = ref(null);
@@ -386,6 +453,8 @@ function updateBarChart() {
 onMounted(() => {
   lineChartInstance = echarts.init(lineChart.value);
   barChartInstance = echarts.init(barChart.value);
+  connectMqtt();
+
   // 先推入10条初始数据
   // for (let i = 0; i < 10; i++) {
   //   data.push(generateData());
@@ -394,19 +463,27 @@ onMounted(() => {
   // updateLineChart();
   // updateBarChart();
   // 模拟实时数据每秒监听
-  const timer = setInterval(() => {
-    data.push(generateData());
-    if (data.length > 100) data.shift(); // 保留100条历史数据，你可调整
-    calcStats();
-    updateLineChart();
-    updateBarChart();
-  }, 1000);
+  // const timer = setInterval(() => {
+  //   data.push(generateData());
+  //   if (data.length > 100) data.shift(); // 保留100条历史数据，你可调整
+  //   calcStats();
+  //   updateLineChart();
+  //   updateBarChart();
+  // }, 1000);
 
-  onBeforeUnmount(() => {
-    clearInterval(timer);
-    if (lineChartInstance) lineChartInstance.dispose();
-    if (barChartInstance) barChartInstance.dispose();
-  });
+  // onBeforeUnmount(() => {
+  //   clearInterval(timer);
+  //   if (lineChartInstance) lineChartInstance.dispose();
+  //   if (barChartInstance) barChartInstance.dispose();
+  // });
+});
+
+onBeforeUnmount(() => {
+  if (client) {
+    client.end(true);
+  }
+  if (lineChartInstance) lineChartInstance.dispose();
+  if (barChartInstance) barChartInstance.dispose();
 });
 </script>
 
