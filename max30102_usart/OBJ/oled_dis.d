@@ -1,0 +1,16 @@
+..\obj\oled_dis.o: ..\HARDWARE\OLED\Oled_Dis.c
+..\obj\oled_dis.o: ..\HARDWARE\OLED\Oled_Dis.h
+..\obj\oled_dis.o: ..\SYSTEM\sys\sys.h
+..\obj\oled_dis.o: ..\USER\stm32f10x.h
+..\obj\oled_dis.o: ..\CORE\core_cm3.h
+..\obj\oled_dis.o: D:\Keil_v5\ARM\ARM_Compiler_5.06u7\Bin\..\include\stdint.h
+..\obj\oled_dis.o: ..\USER\system_stm32f10x.h
+..\obj\oled_dis.o: ..\USER\stm32f10x_conf.h
+..\obj\oled_dis.o: ..\STM32F10x_FWLib\inc\stm32f10x_gpio.h
+..\obj\oled_dis.o: ..\USER\stm32f10x.h
+..\obj\oled_dis.o: ..\STM32F10x_FWLib\inc\stm32f10x_rcc.h
+..\obj\oled_dis.o: ..\STM32F10x_FWLib\inc\stm32f10x_usart.h
+..\obj\oled_dis.o: ..\STM32F10x_FWLib\inc\misc.h
+..\obj\oled_dis.o: D:\Keil_v5\ARM\ARM_Compiler_5.06u7\Bin\..\include\stdlib.h
+..\obj\oled_dis.o: ..\HARDWARE\OLED\oled_font.h
+..\obj\oled_dis.o: ..\SYSTEM\delay\delay.h
